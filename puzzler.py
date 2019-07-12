@@ -27,7 +27,11 @@ red = core.Piece([[0, 1, 1],
                   [0, 0, 1],
                   [0, 0, 1]])
 
-yellow.generate_all_unique_poses()
-for pose in yellow.poses:
-    print()
-    print(pose)
+purple.build_all_unique_poses()
+p = purple._unique_poses[0]
+
+print(p)
+
+for pos in p.all_positions_in_plane():
+    print("")
+    print(pos)

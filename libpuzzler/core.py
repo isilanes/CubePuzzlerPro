@@ -48,6 +48,71 @@ class Pose:
         """
         return Pose(np.array([self.data[2, :], self.data[1, :], self.data[0, :]]))
 
+    def all_positions_in_plane(self):
+        """Recall our pose might be able to move up, down, left, right, up+right, up+left,
+        down+right, down+left, but NOT up+down or left+right.
+        """
+        positions = [self.data]
+
+        up = np.array_equal(self.data[0], np.zeros((3,)))
+        down = np.array_equal(self.data[2], np.zeros((3,)))
+        left = np.array_equal(self.data[:, 0], np.zeros((3,)))
+        right = np.array_equal(self.data[:, 2], np.zeros((3,)))
+
+        if up:
+            u = np.zeros((3, 3), dtype=int)
+            u[0, :] = self.data[1, :]
+            u[1, :] = self.data[2, :]
+            u[2, :] = self.data[0, :]  # zeros
+            positions.append(u)
+            if left:
+                le = np.zeros((3, 3), dtype=int)
+                le[:, 0] = u[:, 1]
+                le[:, 1] = u[:, 2]
+                le[:, 2] = u[:, 0]  # zeros
+                positions.append(le)
+            elif right:
+                r = np.zeros((3, 3), dtype=int)
+                r[:, 0] = u[:, 2]  # zeros
+                r[:, 1] = u[:, 0]
+                r[:, 2] = u[:, 1]
+                positions.append(r)
+
+        if down:
+            d = np.zeros((3, 3), dtype=int)
+            d[0, :] = self.data[2, :]  # zeros
+            d[1, :] = self.data[0, :]
+            d[2, :] = self.data[1, :]
+            positions.append(d)
+            if left:
+                le = np.zeros((3, 3), dtype=int)
+                le[:, 0] = d[:, 1]
+                le[:, 1] = d[:, 2]
+                le[:, 2] = d[:, 0]  # zeros
+                positions.append(le)
+            elif right:
+                r = np.zeros((3, 3), dtype=int)
+                r[:, 0] = d[:, 2]  # zeros
+                r[:, 1] = d[:, 0]
+                r[:, 2] = d[:, 1]
+                positions.append(r)
+
+        if left:
+            d = np.zeros((3, 3), dtype=int)
+            d[:, 0] = self.data[:, 1]
+            d[:, 1] = self.data[:, 2]
+            d[:, 2] = self.data[:, 0]  # zeros
+            positions.append(d)
+
+        if right:
+            d = np.zeros((3, 3), dtype=int)
+            d[:, 0] = self.data[:, 2]  # zeros
+            d[:, 1] = self.data[:, 0]
+            d[:, 2] = self.data[:, 1]
+            positions.append(d)
+
+        return positions
+
     # Special methods:
     def __str__(self):
         return str(self.data)
@@ -56,15 +121,25 @@ class Pose:
         return np.array_equal(reduced_form(self.data), reduced_form(other.data))
 
 
+class Position:
+
+    # Constructor:
+    def __init__(self, data=None):
+        if data is None:
+            self.data = np.zeros((3, 3, 3))
+        else:
+            self.data = np.array(data)
+
+
 class Piece:
 
     # Constructor:
     def __init__(self, initial=None):
         self._initial = Pose(initial)
-        self.poses = []
+        self._unique_poses = []
 
     # Public methods:
-    def generate_all_poses(self):
+    def all_poses(self):
         """Generator to return all possible poses."""
 
         for i_rot in range(4):
@@ -73,11 +148,11 @@ class Piece:
         for i_rot in range(4):
             yield self._initial.mirror().rotate(i_rot)
 
-    def generate_all_unique_poses(self):
+    def build_all_unique_poses(self):
         """Take only poses that are not equal to existing ones."""
 
         unique_poses = []
-        for new_pose in self.generate_all_poses():
+        for new_pose in self.all_poses():
             already_taken_into_account = False
             for old_pose in unique_poses:
                 if new_pose == old_pose:
@@ -87,5 +162,11 @@ class Piece:
             if not already_taken_into_account:
                 unique_poses.append(new_pose)
 
-        self.poses = unique_poses
+        self._unique_poses = unique_poses
+
+    def build_all_positions(self):
+
+        positions = []
+        for pose in self._unique_poses:
+            pass
 
