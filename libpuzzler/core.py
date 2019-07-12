@@ -137,6 +137,7 @@ class Piece:
     def __init__(self, initial=None):
         self._initial = Pose(initial)
         self._unique_poses = []
+        self.positions_in_plane = []
 
     # Public methods:
     def all_poses(self):
@@ -168,5 +169,8 @@ class Piece:
 
         positions = []
         for pose in self._unique_poses:
-            pass
+            for position in pose.all_positions_in_plane():
+                positions.append(position)
+
+        self.positions_in_plane = positions
 

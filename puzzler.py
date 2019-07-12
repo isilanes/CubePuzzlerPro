@@ -28,10 +28,8 @@ red = core.Piece([[0, 1, 1],
                   [0, 0, 1]])
 
 purple.build_all_unique_poses()
-p = purple._unique_poses[0]
+purple.build_all_positions()
 
-print(p)
-
-for pos in p.all_positions_in_plane():
+for pos in purple.positions_in_plane:
     print("")
     print(pos)
