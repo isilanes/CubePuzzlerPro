@@ -200,4 +200,41 @@ class Piece:
             self._positions_in_plane = self.build_all_positions()
         
         return self._positions_in_plane
+    
+    
+class Cube:
+    """State of the cube."""
+    
+    # Constructor:
+    def __init__(self, pieces):
+        self._state = np.zeros((3, 3, 3), dtype=int)
+        self._pieces = pieces
+        self._position_indices = [0, 0, 0, 0, 0, 0]
+        self._location_indices = [0, 0, 0, 0, 0, 0]
+        self._current_index = 0
+    
+    # Public methods:
+    def piece_fits(self, piece_index, position_index, location_index):
+        """Return True if piece in position and location fits."""
+        
+        pos = self._pieces[piece_index].positions_in_plane[position_index]
+        face = self.get_face(location_index)
+        
+        return 2 not in pos+face
+    
+    def get_face(self, index):
+        """Return 3x3 face located at location index 'index'."""
+        
+        if index in [0, 1, 2]:
+            return self._state[:, :, index]
+        
+        if index in [3, 4, 5]:
+            return self._state[:, index-3, :]
+        
+        if index in [6, 7, 8]:
+            return self._state[index-6, :, :]
+
+    # Special methods:
+    def __str__(self):
+        return "\n".join(["   ".join([str(self._state[i, :, k]) for k in range(3)]) for i in range(3)])
 

@@ -27,6 +27,7 @@ red = core.Piece([[0, 1, 1],
                   [0, 0, 1],
                   [0, 0, 1]])
 
-for pos in purple.positions_in_plane:
-    print("")
-    print(pos)
+cube = core.Cube([blue, orange, purple, green, yellow, red])
+print(cube)
+
+print(cube.piece_fits(0, 0, 0))
