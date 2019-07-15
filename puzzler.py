@@ -27,14 +27,8 @@ red = core.Piece([[0, 1, 1],
                   [0, 0, 1],
                   [0, 0, 1]])
 
-cube = core.Cube([orange, blue, purple, green, yellow, red])
+cube = core.Cube([blue, orange, purple, green, yellow, red])
 
 print(cube)
-
-for _ in range(100):
-    cube.next()
-
-    print("")
-    print(cube._current_piece_index)
-    print(cube._position_indices)
-    print(cube._location_indices)
+cube.run()
+print(cube)

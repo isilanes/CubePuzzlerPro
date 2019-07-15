@@ -211,8 +211,7 @@ class Cube:
         self._pieces = pieces
         self._position_indices = [-1, 0, 0, 0, 0, 0]
         self._location_indices = [0, 0, 0, 0, 0, 0]
-        self._current_piece_index = 0
-        
+
     # Public methods:
     def piece_fits(self, piece_index, position_index, location_index):
         """Return True if piece in position and location fits."""
@@ -225,9 +224,20 @@ class Cube:
     def place_piece(self, piece_index, position_index, location_index):
         
         pos = self._pieces[piece_index].positions_in_plane[position_index]
-        
-        self.set_face(location_index, pos)
-    
+        self._position_indices[piece_index] = position_index
+        self._location_indices[piece_index] = location_index
+
+        self.put_into_face(location_index, pos)
+
+    def remove_piece(self, piece_index):
+        """Remove i-th piece."""
+
+        i_pos = self._position_indices[piece_index]
+        i_loc = self._location_indices[piece_index]
+        pos = -1 * self._pieces[piece_index].positions_in_plane[i_pos]
+
+        self.put_into_face(i_loc, pos)
+
     def get_face(self, index):
         """Return 3x3 face located at location index 'index'."""
         
@@ -240,36 +250,62 @@ class Cube:
         if index in [6, 7, 8]:
             return self._data[index - 6, :, :]
     
-    def set_face(self, index, value):
+    def put_into_face(self, index, value):
     
         if index in [0, 1, 2]:
-            self._data[:, :, index] = value
+            self._data[:, :, index] += value
     
         if index in [3, 4, 5]:
-            self._data[:, index - 3, :] = value
+            self._data[:, index - 3, :] += value
     
         if index in [6, 7, 8]:
-            self._data[index - 6, :, :] = value
-    
-    def next(self):
-        current_piece = self._pieces[self._current_piece_index]
-        n_positions = len(current_piece.positions_in_plane)
-        current_position = self._position_indices[self._current_piece_index]
-        current_location = self._location_indices[self._current_piece_index]
-        
-        if current_position + 1 < n_positions:
-            self._position_indices[self._current_piece_index] += 1
-            
-        elif current_location < 8:
-            self._location_indices[self._current_piece_index] += 1
-            self._position_indices[self._current_piece_index] = 0
-        
-        elif self._current_piece_index + 1 < len(self._pieces):
-            self._current_piece_index += 1
-        
-        else:
-            raise Exception("No solution")
-        
+            self._data[index - 6, :, :] += value
+
+    def first_available_for_piece(self, piece_index):
+        """Return first available position+location for piece_index-th Piece."""
+
+        current_piece = self._pieces[piece_index]
+        current_i_loc = self._location_indices[piece_index]
+        current_i_pos = self._position_indices[piece_index]
+        n_pos = len(current_piece.positions_in_plane)
+
+        # Current location, all remaining positions:
+        for i_pos in range(current_i_pos+1, n_pos):
+            if self.piece_fits(piece_index, i_pos, current_i_loc):
+                return current_i_loc, i_pos
+
+        # For locations forward, all positions:
+        for i_loc in range(current_i_loc+1, 9):
+            for i_pos in range(n_pos):
+                if self.piece_fits(piece_index, i_pos, i_loc):
+                    return i_loc, i_pos
+
+        return None, None
+
+    def run(self):
+        """Find solution."""
+
+        i_piece = 0
+        while True:
+            loc, pos = self.first_available_for_piece(i_piece)
+            if loc is None:
+                self._location_indices[i_piece] = 0
+                self._position_indices[i_piece] = 0
+                i_piece -= 1
+                if i_piece < 0:
+                    print("failure")
+                    break
+                else:
+                    self.remove_piece(i_piece)
+            else:
+                self.place_piece(i_piece, pos, loc)
+                i_piece += 1
+                if i_piece == len(self._pieces):
+                    print("success")
+                    print(self._location_indices)
+                    print(self._position_indices)
+                    break
+
     # Special methods:
     def __str__(self):
         return "\n".join(["   ".join([str(self._data[i, :, k]) for k in range(3)]) for i in range(3)])
