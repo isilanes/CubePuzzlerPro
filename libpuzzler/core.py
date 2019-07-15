@@ -33,8 +33,12 @@ class Pose:
             self.data = np.zeros((3, 3))
         else:
             self.data = np.array(data)
+        
+        self._all_positions_in_plane = None
+        self._current_location_index = 0  # which location we are currently in
+        self._current_position_index = 0  # which position we are currently in
 
-    # Public properties:
+    # Public methods:
     def rotate(self, k=1):
         """Return the Pose, but rotated k*90 degrees CW."""
 
@@ -48,71 +52,76 @@ class Pose:
         """
         return Pose(np.array([self.data[2, :], self.data[1, :], self.data[0, :]]))
 
+    # Public properties:
+    @property
     def all_positions_in_plane(self):
         """Recall our pose might be able to move up, down, left, right, up+right, up+left,
         down+right, down+left, but NOT up+down or left+right.
         """
-        positions = [self.data]
+        if self._all_positions_in_plane is None:
+            positions = [self.data]
 
-        up = np.array_equal(self.data[0], np.zeros((3,)))
-        down = np.array_equal(self.data[2], np.zeros((3,)))
-        left = np.array_equal(self.data[:, 0], np.zeros((3,)))
-        right = np.array_equal(self.data[:, 2], np.zeros((3,)))
+            up = np.array_equal(self.data[0], np.zeros((3,)))
+            down = np.array_equal(self.data[2], np.zeros((3,)))
+            left = np.array_equal(self.data[:, 0], np.zeros((3,)))
+            right = np.array_equal(self.data[:, 2], np.zeros((3,)))
 
-        if up:
-            u = np.zeros((3, 3), dtype=int)
-            u[0, :] = self.data[1, :]
-            u[1, :] = self.data[2, :]
-            u[2, :] = self.data[0, :]  # zeros
-            positions.append(u)
+            if up:
+                u = np.zeros((3, 3), dtype=int)
+                u[0, :] = self.data[1, :]
+                u[1, :] = self.data[2, :]
+                u[2, :] = self.data[0, :]  # zeros
+                positions.append(u)
+                if left:
+                    le = np.zeros((3, 3), dtype=int)
+                    le[:, 0] = u[:, 1]
+                    le[:, 1] = u[:, 2]
+                    le[:, 2] = u[:, 0]  # zeros
+                    positions.append(le)
+                elif right:
+                    r = np.zeros((3, 3), dtype=int)
+                    r[:, 0] = u[:, 2]  # zeros
+                    r[:, 1] = u[:, 0]
+                    r[:, 2] = u[:, 1]
+                    positions.append(r)
+
+            if down:
+                d = np.zeros((3, 3), dtype=int)
+                d[0, :] = self.data[2, :]  # zeros
+                d[1, :] = self.data[0, :]
+                d[2, :] = self.data[1, :]
+                positions.append(d)
+                if left:
+                    le = np.zeros((3, 3), dtype=int)
+                    le[:, 0] = d[:, 1]
+                    le[:, 1] = d[:, 2]
+                    le[:, 2] = d[:, 0]  # zeros
+                    positions.append(le)
+                elif right:
+                    r = np.zeros((3, 3), dtype=int)
+                    r[:, 0] = d[:, 2]  # zeros
+                    r[:, 1] = d[:, 0]
+                    r[:, 2] = d[:, 1]
+                    positions.append(r)
+
             if left:
-                le = np.zeros((3, 3), dtype=int)
-                le[:, 0] = u[:, 1]
-                le[:, 1] = u[:, 2]
-                le[:, 2] = u[:, 0]  # zeros
-                positions.append(le)
-            elif right:
-                r = np.zeros((3, 3), dtype=int)
-                r[:, 0] = u[:, 2]  # zeros
-                r[:, 1] = u[:, 0]
-                r[:, 2] = u[:, 1]
-                positions.append(r)
+                d = np.zeros((3, 3), dtype=int)
+                d[:, 0] = self.data[:, 1]
+                d[:, 1] = self.data[:, 2]
+                d[:, 2] = self.data[:, 0]  # zeros
+                positions.append(d)
 
-        if down:
-            d = np.zeros((3, 3), dtype=int)
-            d[0, :] = self.data[2, :]  # zeros
-            d[1, :] = self.data[0, :]
-            d[2, :] = self.data[1, :]
-            positions.append(d)
-            if left:
-                le = np.zeros((3, 3), dtype=int)
-                le[:, 0] = d[:, 1]
-                le[:, 1] = d[:, 2]
-                le[:, 2] = d[:, 0]  # zeros
-                positions.append(le)
-            elif right:
-                r = np.zeros((3, 3), dtype=int)
-                r[:, 0] = d[:, 2]  # zeros
-                r[:, 1] = d[:, 0]
-                r[:, 2] = d[:, 1]
-                positions.append(r)
+            if right:
+                d = np.zeros((3, 3), dtype=int)
+                d[:, 0] = self.data[:, 2]  # zeros
+                d[:, 1] = self.data[:, 0]
+                d[:, 2] = self.data[:, 1]
+                positions.append(d)
 
-        if left:
-            d = np.zeros((3, 3), dtype=int)
-            d[:, 0] = self.data[:, 1]
-            d[:, 1] = self.data[:, 2]
-            d[:, 2] = self.data[:, 0]  # zeros
-            positions.append(d)
-
-        if right:
-            d = np.zeros((3, 3), dtype=int)
-            d[:, 0] = self.data[:, 2]  # zeros
-            d[:, 1] = self.data[:, 0]
-            d[:, 2] = self.data[:, 1]
-            positions.append(d)
-
-        return positions
-
+            self._all_positions_in_plane = positions
+        
+        return self._all_positions_in_plane
+    
     # Special methods:
     def __str__(self):
         return str(self.data)
@@ -136,8 +145,8 @@ class Piece:
     # Constructor:
     def __init__(self, initial=None):
         self._initial = Pose(initial)
-        self._unique_poses = []
-        self.positions_in_plane = []
+        self._unique_poses = None
+        self._positions_in_plane = None
 
     # Public methods:
     def all_poses(self):
@@ -163,14 +172,32 @@ class Piece:
             if not already_taken_into_account:
                 unique_poses.append(new_pose)
 
-        self._unique_poses = unique_poses
+        return unique_poses
 
     def build_all_positions(self):
 
         positions = []
-        for pose in self._unique_poses:
-            for position in pose.all_positions_in_plane():
+        for pose in self.unique_poses:
+            for position in pose.all_positions_in_plane:
                 positions.append(position)
 
-        self.positions_in_plane = positions
+        return positions
+    
+    def put_piece(self):
+        pass
+    
+    # Public properties:
+    @property
+    def unique_poses(self):
+        if self._unique_poses is None:
+            self._unique_poses = self.build_all_unique_poses()
+        
+        return self._unique_poses
+    
+    @property
+    def positions_in_plane(self):
+        if self._positions_in_plane is None:
+            self._positions_in_plane = self.build_all_positions()
+        
+        return self._positions_in_plane
 

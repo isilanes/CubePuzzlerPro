@@ -27,9 +27,6 @@ red = core.Piece([[0, 1, 1],
                   [0, 0, 1],
                   [0, 0, 1]])
 
-purple.build_all_unique_poses()
-purple.build_all_positions()
-
 for pos in purple.positions_in_plane:
     print("")
     print(pos)
