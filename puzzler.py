@@ -28,6 +28,10 @@ red = core.Piece([[0, 1, 1],
                   [0, 0, 1]])
 
 cube = core.Cube([blue, orange, purple, green, yellow, red])
-print(cube)
 
-print(cube.piece_fits(0, 0, 0))
+print(cube)
+if cube.piece_fits(0, 0, 0):
+    cube.place_piece(0, 0, 0)
+
+print("")
+print(cube)

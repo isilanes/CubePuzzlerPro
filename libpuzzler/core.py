@@ -222,6 +222,12 @@ class Cube:
         
         return 2 not in pos+face
     
+    def place_piece(self, piece_index, position_index, location_index):
+        
+        pos = self._pieces[piece_index].positions_in_plane[position_index]
+        
+        self.set_face(location_index, pos)
+    
     def get_face(self, index):
         """Return 3x3 face located at location index 'index'."""
         
@@ -233,7 +239,18 @@ class Cube:
         
         if index in [6, 7, 8]:
             return self._state[index-6, :, :]
-
+    
+    def set_face(self, index, value):
+    
+        if index in [0, 1, 2]:
+            self._state[:, :, index] = value
+    
+        if index in [3, 4, 5]:
+            self._state[:, index-3, :] = value
+    
+        if index in [6, 7, 8]:
+            self._state[index-6, :, :] = value
+        
     # Special methods:
     def __str__(self):
         return "\n".join(["   ".join([str(self._state[i, :, k]) for k in range(3)]) for i in range(3)])
