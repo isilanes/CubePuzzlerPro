@@ -207,12 +207,12 @@ class Cube:
     
     # Constructor:
     def __init__(self, pieces):
-        self._state = np.zeros((3, 3, 3), dtype=int)
+        self._data = np.zeros((3, 3, 3), dtype=int)
         self._pieces = pieces
-        self._position_indices = [0, 0, 0, 0, 0, 0]
+        self._position_indices = [-1, 0, 0, 0, 0, 0]
         self._location_indices = [0, 0, 0, 0, 0, 0]
-        self._current_index = 0
-    
+        self._current_piece_index = 0
+        
     # Public methods:
     def piece_fits(self, piece_index, position_index, location_index):
         """Return True if piece in position and location fits."""
@@ -232,26 +232,45 @@ class Cube:
         """Return 3x3 face located at location index 'index'."""
         
         if index in [0, 1, 2]:
-            return self._state[:, :, index]
+            return self._data[:, :, index]
         
         if index in [3, 4, 5]:
-            return self._state[:, index-3, :]
+            return self._data[:, index - 3, :]
         
         if index in [6, 7, 8]:
-            return self._state[index-6, :, :]
+            return self._data[index - 6, :, :]
     
     def set_face(self, index, value):
     
         if index in [0, 1, 2]:
-            self._state[:, :, index] = value
+            self._data[:, :, index] = value
     
         if index in [3, 4, 5]:
-            self._state[:, index-3, :] = value
+            self._data[:, index - 3, :] = value
     
         if index in [6, 7, 8]:
-            self._state[index-6, :, :] = value
+            self._data[index - 6, :, :] = value
+    
+    def next(self):
+        current_piece = self._pieces[self._current_piece_index]
+        n_positions = len(current_piece.positions_in_plane)
+        current_position = self._position_indices[self._current_piece_index]
+        current_location = self._location_indices[self._current_piece_index]
+        
+        if current_position + 1 < n_positions:
+            self._position_indices[self._current_piece_index] += 1
+            
+        elif current_location < 8:
+            self._location_indices[self._current_piece_index] += 1
+            self._position_indices[self._current_piece_index] = 0
+        
+        elif self._current_piece_index + 1 < len(self._pieces):
+            self._current_piece_index += 1
+        
+        else:
+            raise Exception("No solution")
         
     # Special methods:
     def __str__(self):
-        return "\n".join(["   ".join([str(self._state[i, :, k]) for k in range(3)]) for i in range(3)])
+        return "\n".join(["   ".join([str(self._data[i, :, k]) for k in range(3)]) for i in range(3)])
 
